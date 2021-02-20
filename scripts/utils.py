@@ -11,15 +11,16 @@ def features_relevance_analysis(features, variance_criterion=0.98):
     n_samples, n_features = features.shape
     xx = np.power(features.T.dot(features), 2)
     evals, evects = np.linalg.eig(xx)
+    # weight on original data
     W = np.diag(evects[:, np.argmax(evals)])
     X = features.dot(W)
 
     ## PCA
     pca = PCA(n_features)
     _ = pca.fit(X)
-    # number of relevant features
-    n_relevant_f = (np.cumsum(pca.explained_variance_ratio_) < variance_criterion).sum() + 1
-    V = pca.components_[:n_relevant_f, :].T
+    # number of relevant components
+    n_relevant_c = (np.cumsum(pca.explained_variance_ratio_) < variance_criterion).sum() + 1
+    V = pca.components_[:n_relevant_c, :].T
 
     # data projection
     return X.dot(V)
