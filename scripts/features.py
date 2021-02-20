@@ -93,7 +93,7 @@ def katz_fractal_dimension(data):
 
 
 # DETRENDED FLUCTUATION ANALYSIS
-def dfa(ts, debug_plot=False, n_scales=15):
+def dfa_sasha(ts, debug_plot=False, n_scales=15):
     """
     Perform detrended fluctuation analysis.
 
@@ -103,7 +103,7 @@ def dfa(ts, debug_plot=False, n_scales=15):
 
     :return : float, scaling exponent DFA-alpha
     """
-    nvals = np.logspace(3, np.log10(len(ts) // 100), n_scales).astype(int)  # to modify (ts are epochs, so much smaller)
+    nvals = None # np.logspace(3, np.log10(len(ts) // 100), n_scales).astype(int) # to modify (ts are epochs, so much smaller)
     return nolds.dfa(ts, nvals=nvals, order=1, overlap=False, debug_plot=debug_plot)
 
 
