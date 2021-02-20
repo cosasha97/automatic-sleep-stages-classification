@@ -120,3 +120,8 @@ def shannon_entropy(ts,n_boxes=100):
     hist = hist/hist.sum()
     hist = hist[hist>0]
     return -np.sum(hist*np.log2(hist))/np.log2(n_boxes)
+
+
+# APPROXIMATE ENTROPY
+def approximate_entropy(ts):
+    return 0
