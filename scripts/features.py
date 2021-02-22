@@ -125,3 +125,112 @@ def shannon_entropy(ts,n_boxes=100):
 # APPROXIMATE ENTROPY
 def approximate_entropy(ts):
     return 0
+
+
+# SAMPLE ENTROPY
+def sample_entropy(ts, m, r=None):
+    """
+    Compute sample entropy.
+    :param ts: array, inputted time-series
+    :param m: int, pattern length
+    :param r: float, error threshold
+
+    :return float, sample entropy
+
+    Reference:
+    Code adapted https://en.wikipedia.org/wiki/Sample_entropy
+    """
+    x = ts
+    N = len(x)
+
+    if r is None:
+        r = 0.1 * np.std(x)
+
+    # Split time series and save all templates of length m
+    xmi = np.array([x[i: i + m] for i in range(N - m)])
+    xmj = np.array([x[i: i + m] for i in range(N - m + 1)])
+
+    # Save all matches minus the self-match, compute B
+    B = np.sum([np.sum(np.abs(xmii - xmj).max(axis=1) <= r) - 1 for xmii in xmi])
+
+    # Similar for computing A
+    m += 1
+    xm = np.array([x[i: i + m] for i in range(N - m + 1)])
+
+    A = np.sum([np.sum(np.abs(xmi - xm).max(axis=1) <= r) - 1 for xmi in xm])
+
+    # Return Sample Entropy
+    return -np.log(A / B)
+
+
+# MULTISCALE ENTROPY
+def multiscale_entropy(ts, m, min_tau=2, max_tau=9, r=None):
+    """
+    Compute multiscale entropy.
+    :param ts: array, inputted time-series
+    :param m: int, pattern length
+    :param min_tau: minimum scale factor
+    :param max_tau: maximum scale factor
+    :param r: float, error threshold
+
+    :return array, multi-scale entropy (sample entropy at different scales)
+    """
+    x = ts
+    if r is None:
+        r = 0.1 * np.std(x)
+
+    me = np.zeros(max_tau - min_tau + 1)
+    n = x.shape[0]
+    taus = np.arange(min_tau, max_tau + 1).astype('int')
+
+    for i in range(len(taus)):
+        tau = taus[i]
+        k = int(np.floor(n / tau))
+        print(k)
+        y = x[:tau * k].reshape((k, tau))
+        y = y.mean(axis=1)
+        me[i] = sample_entropy(y, m, r)
+
+    return me
+
+
+# DETRENDED FLUCTUATION
+def dfa(ts, min_L, max_L):
+    """
+    Compute detrended fluctuation analysis alpha coefficient
+    :param ts: time series
+    :param min_L: minimum time scale
+    :param max_L: maximum time scale
+
+    :return float, dfa-alpha
+    """
+
+    x = ts
+    n = x.shape[0]
+    rmse = np.zeros(int(max_L - min_L + 1))
+    L_s = np.arange(min_L, max_L + 1)
+
+    for i in range(len(L_s)):
+        L = L_s[i]
+        k = int(np.floor(n / L))
+
+        # Integrated time series
+        y = np.cumsum(x - np.mean(x))
+        y = y[:int(k * L)].reshape((k, L))
+
+        # Linear fitting
+        x_scale = np.arange(L)
+        coef = np.polyfit(x_scale, y.T, 1)
+        trend = (coef[0][:, None] * x_scale + coef[1][:, None])
+
+        y = y.reshape(-1)
+        trend = trend.reshape(-1)
+
+        # RMSE F(L)
+        rmse[i] = np.sqrt(np.mean((y - trend) ** 2))
+
+    # Linear fitting (log(L), log(F(L)))
+    coef = np.polyfit(np.log10(L_s), np.log10(rmse), 1)
+    alpha = coef[0]
+
+    return alpha
