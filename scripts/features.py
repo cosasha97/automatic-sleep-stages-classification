@@ -123,8 +123,38 @@ def shannon_entropy(ts,n_boxes=100):
 
 
 # APPROXIMATE ENTROPY
-def approximate_entropy(ts):
-    return 0
+def approximate_entropy(ts, m, r):
+    """
+    Compute approximate entropy.
+    :param ts: array, inputted time-series
+    :param m: int, pattern length
+    :param r: float, error threshold
+
+    :return float, sample entropy
+    """
+    x = ts
+    N = len(x)
+    B = 0.0
+    A = 0.0
+
+    if r is None:
+        r = 0.1 * np.std(x)
+
+    # Split time series and save all templates of length m
+    xmi = np.array([x[i: i + m] for i in range(N - m)])
+    xmj = np.array([x[i: i + m] for i in range(N - m + 1)])
+
+    # Save all matches minus the self-match, compute B
+    B = np.sum([np.sum(np.abs(xmii - xmj).max(axis=1) <= r) - 1 for xmii in xmi]) / (N - m + 1)
+
+    # Similar for computing A
+    m += 1
+    xm = np.array([x[i: i + m] for i in range(N - m + 1)])
+
+    A = np.sum([np.sum(np.abs(xmi - xm).max(axis=1) <= r) - 1 for xmi in xm]) / (N - m)
+
+    # Return ApEn
+    return np.log(B) / (N - m + 1) - np.log(A) / (N - m)
 
 
 # SAMPLE ENTROPY
