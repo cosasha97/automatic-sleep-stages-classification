@@ -7,6 +7,9 @@ import os
 
 
 class DataLoader:
+    """
+    Framework to load EEG data.
+    """
     def __init__(self, path='data/files/sleep-edfx/1.0.0/sleep-cassette'):
         """
         :param path: string, path to data
