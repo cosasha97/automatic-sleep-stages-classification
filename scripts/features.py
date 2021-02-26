@@ -160,6 +160,7 @@ def approximate_entropy(ts, m, r=None):
 def ApEn(U, m=2, r=None):
     """
     Compute approximate entropy of the signal U.
+    Inspired from https://gist.github.com/DustinAlandzes/a835909ffd15b9927820d175a48dee41
 
     :param U: array, time-series
     :param m: int, length of the patterns
