@@ -123,7 +123,7 @@ def shannon_entropy(ts,n_boxes=100):
 
 
 # APPROXIMATE ENTROPY
-def approximate_entropy(ts, m, r):
+def approximate_entropy(ts, m, r=None):
     """
     Compute approximate entropy.
     :param ts: array, inputted time-series
@@ -194,13 +194,12 @@ def sample_entropy(ts, m, r=None):
 
 
 # MULTISCALE ENTROPY
-def multiscale_entropy(ts, m, min_tau=2, max_tau=9, r=None):
+def multiscale_entropy(ts, m, tau, r=None):
     """
     Compute multiscale entropy.
     :param ts: array, inputted time-series
     :param m: int, pattern length
-    :param min_tau: minimum scale factor
-    :param max_tau: maximum scale factor
+    :param tau: scale scale factor
     :param r: float, error threshold
 
     :return array, multi-scale entropy (sample entropy at different scales)
@@ -209,17 +208,12 @@ def multiscale_entropy(ts, m, min_tau=2, max_tau=9, r=None):
     if r is None:
         r = 0.1 * np.std(x)
 
-    me = np.zeros(max_tau - min_tau + 1)
     n = x.shape[0]
-    taus = np.arange(min_tau, max_tau + 1).astype('int')
 
-    for i in range(len(taus)):
-        tau = taus[i]
-        k = int(np.floor(n / tau))
-        print(k)
-        y = x[:tau * k].reshape((k, tau))
-        y = y.mean(axis=1)
-        me[i] = sample_entropy(y, m, r)
+    k = int(np.floor(n / tau))
+    y = x[:tau * k].reshape((k, tau))
+    y = y.mean(axis=1)
+    me = sample_entropy(y, m, r)
 
     return me
 
