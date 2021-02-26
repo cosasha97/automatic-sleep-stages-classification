@@ -2,6 +2,38 @@ import numpy as np
 from scipy.spatial import distance_matrix
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
+import mne
+import os
+
+
+class DataLoader:
+    def __init__(self, path='data/files/sleep-edfx/1.0.0/sleep-cassette'):
+        """
+        :param path: string, path to data
+        """
+        self.path = path
+        self.files = [file for file in os.listdir(self.path) if '.edf' in file]
+        self.files.sort()
+        self.nb_patients = len(self.files) // 2
+
+    def get_data(self):
+        """
+        Create iterator fetching data (i.e 'EEG Fpz-Cz' and 'EEG Pz-Oz'  time-series).
+        :return array (2, N), raw time-series
+        """
+        for patient in range(self.nb_patients):
+            file_path = os.path.join(self.path, self.files[2 * patient])
+            raw_file = mne.io.read_raw_edf(file_path)
+            raw_data = raw_file.get_data()
+            # select channels
+            channels = np.array(raw_file.ch_names)
+            channel1 = np.where((channels == 'EEG Fpz-Cz'))[0]
+            channel2 = np.where((channels == 'EEG Pz-Oz'))[0]
+            selected_channels = np.hstack([channel1, channel2])
+            if selected_channels.size != 2:
+                raise Exception("Missing channel")
+            del raw_file
+            yield raw_data[selected_channels]
 
 
 def features_relevance_analysis(features, variance_criterion=0.98):
