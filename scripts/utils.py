@@ -10,33 +10,72 @@ class DataLoader:
     """
     Framework to load EEG data.
     """
+
     def __init__(self, path='data/files/sleep-edfx/1.0.0/sleep-cassette'):
         """
         :param path: string, path to data
         """
         self.path = path
-        self.files = [file for file in os.listdir(self.path) if 'PSG.edf' in file]
+        self.files = [file for file in os.listdir(self.path) if '.edf' in file]
         self.files.sort()
-        self.nb_patients = len(self.files)
+        self.nb_patients = len(self.files) // 2
 
     def get_data(self):
         """
-        Create iterator fetching data (i.e 'EEG Fpz-Cz' and 'EEG Pz-Oz'  time-series).
-        :return array (2, N), raw time-series
+        Create iterator fetching data ('EEG Fpz-Cz' and 'EEG Pz-Oz'  time-series).
+
+        :return iterator generating dictionaries with the following data:
+            - PSG_name: string, name of the PSG file
+            - hypnogram_name: string, name of the hypnogram file
+            - id: int, patient's id
+            - night: int
+            - ann_id: int
+            - data: array with shape (n_epochs, 2, n_time_steps), epochs of 30s extracted from EEG Fpz-Cz EEG Pz-Oz
+            - times: array with shape (n_epochs,), starting time of each epoch
+            - labels: array with shape (n_epochs,), labels of the epochs
         """
+        annotation_desc_2_event_id = {'Sleep stage W': 1,
+                                      'Sleep stage 1': 2,
+                                      'Sleep stage 2': 3,
+                                      'Sleep stage 3': 4,
+                                      'Sleep stage 4': 4,
+                                      'Sleep stage R': 5}
+
+        # create a new event_id that unifies stages 3 and 4
+        event_id = {'Sleep stage W': 1,
+                    'Sleep stage 1': 2,
+                    'Sleep stage 2': 3,
+                    'Sleep stage 3/4': 4,
+                    'Sleep stage R': 5}
+
         for patient in range(self.nb_patients):
-            file_path = os.path.join(self.path, self.files[2 * patient])
-            raw_file = mne.io.read_raw_edf(file_path)
+            raw_file = mne.io.read_raw_edf(os.path.join(self.path, self.files[2 * patient]))
+            annotations = mne.read_annotations(os.path.join(self.path, self.files[2 * patient + 1]))
             raw_data = raw_file.get_data()
-            # select channels
-            channels = np.array(raw_file.ch_names)
-            channel1 = np.where((channels == 'EEG Fpz-Cz'))[0]
-            channel2 = np.where((channels == 'EEG Pz-Oz'))[0]
-            selected_channels = np.hstack([channel1, channel2])
-            if selected_channels.size != 2:
-                raise Exception("Missing channel")
-            del raw_file
-            yield self.files[patient], raw_data[selected_channels]
+
+            raw_file.set_annotations(annotations, emit_warning=False)
+
+            annotations.crop(annotations[1]['onset'] - 30 * 60, annotations[-2]['onset'] + 30 * 60)
+            raw_file.set_annotations(annotations, emit_warning=False)
+
+            a, _ = mne.events_from_annotations(raw_file, event_id=annotation_desc_2_event_id, chunk_duration=30.)
+
+            tmax = 30. - 1. / raw_file.info['sfreq']  # tmax in included
+
+            epochs = mne.Epochs(raw=raw_file, events=a, event_id=event_id, tmin=0., tmax=tmax, baseline=None)
+
+            # build dictionary
+            resu = dict()
+            resu['PSG_name'] = self.files[2 * patient]
+            resu['hypnogram_name'] = self.files[2 * patient + 1]
+            resu['id'] = int(self.files[2 * patient][3:5])
+            resu['night'] = int(self.files[2 * patient][5])
+            resu['ann_id'] = int(self.files[2 * patient][7])
+            resu['data'] = epochs.get_data(picks=['EEG Fpz-Cz', 'EEG Pz-Oz'])
+            resu['times'] = epochs.events[:, 0]
+            resu['labels'] = epochs.events[:, 2]
+
+            yield resu
 
 
 def features_relevance_analysis(features, variance_criterion=0.98):
