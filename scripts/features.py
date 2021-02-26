@@ -157,6 +157,32 @@ def approximate_entropy(ts, m, r=None):
     return np.log(B) / (N - m + 1) - np.log(A) / (N - m)
 
 
+def ApEn(U, m=2, r=None):
+    """
+    Compute approximate entropy of the signal U.
+
+    :param U: array, time-series
+    :param m: int, length of the patterns
+    :param r: error threshold
+
+    :return float, approximate entropy
+    """
+    U = np.array(U)
+    N = U.shape[0]
+
+    if r is None:
+        r = np.std(U) * 0.2
+
+    def _phi(m):
+        z = N - m + 1.0
+        x = np.array([U[i:i + m] for i in range(int(z))])
+        X = x[:, np.newaxis]
+        C = np.sum(np.absolute(x - X).max(axis=2) <= r, axis=0) / z
+        return np.log(C).sum() / z
+
+    return abs(_phi(m + 1) - _phi(m))
+
+
 # SAMPLE ENTROPY
 def sample_entropy(ts, m, r=None):
     """
