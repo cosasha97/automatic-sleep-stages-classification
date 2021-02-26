@@ -12,9 +12,9 @@ class DataLoader:
         :param path: string, path to data
         """
         self.path = path
-        self.files = [file for file in os.listdir(self.path) if '.edf' in file]
+        self.files = [file for file in os.listdir(self.path) if 'PSG.edf' in file]
         self.files.sort()
-        self.nb_patients = len(self.files) // 2
+        self.nb_patients = len(self.files)
 
     def get_data(self):
         """
