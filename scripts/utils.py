@@ -36,7 +36,7 @@ class DataLoader:
             if selected_channels.size != 2:
                 raise Exception("Missing channel")
             del raw_file
-            yield raw_data[selected_channels]
+            yield self.files[patient], raw_data[selected_channels]
 
 
 def features_relevance_analysis(features, variance_criterion=0.98):
