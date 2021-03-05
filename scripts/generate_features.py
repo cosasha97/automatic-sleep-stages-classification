@@ -51,20 +51,14 @@ feature_names = [
     'MSE-tau4-Fpz',
     'MSE-tau5-Fpz',
     'MSE-tau6-Fpz',
-    'MSE-tau7-Fpz',
-    'MSE-tau8-Fpz',
-    'MSE-tau9-Fpz',
     'MSE-tau2-Pz',
     'MSE-tau3-Pz',
     'MSE-tau4-Pz',
     'MSE-tau5-Pz',
-    'MSE-tau6-Pz',
-    'MSE-tau7-Pz',
-    'MSE-tau8-Pz',
-    'MSE-tau9-Pz',
+    'MSE-tau6-Pz'
 ]
 
-if __name__ == 'main':
+if __name__ == '__main__':
 
     output_path = 'features.csv'
     resume = os.path.exists(output_path)
@@ -77,6 +71,14 @@ if __name__ == 'main':
     dataloader = DataLoader()
 
     for k, data in enumerate(dataloader.get_data()):
+
+        eeg_fpz_all = data['data'][:, 0, :]
+        eeg_pz_all = data['data'][:, 1, :]
+
+        eeg_fpz_mean = eeg_fpz_all.reshape(-1).mean()
+        eeg_fpz_std = eeg_fpz_all.reshape(-1).std()
+        eeg_pz_mean = eeg_pz_all.reshape(-1).mean()
+        eeg_pz_std = eeg_pz_all.reshape(-1).std()
 
         num_epochs = len(data['labels'])
 
@@ -97,10 +99,13 @@ if __name__ == 'main':
 
             time0 = time.time()
             print('Sample {} -- Epoch {} / {}'.format(k + 1, i + 1, num_epochs))
-            # clear_output(wait=True)
 
-            eeg_fpz = data['data'][i, 0, :]
-            eeg_pz = data['data'][i, 1, :]
+            eeg_fpz = eeg_fpz_all[i]
+            eeg_pz = eeg_pz_all[i]
+
+            # Normalization
+            eeg_fpz = (eeg_fpz - eeg_fpz_mean) / eeg_fpz_std
+            eeg_pz = (eeg_pz - eeg_pz_mean) / eeg_pz_std
 
             # Fractal dimension
             features['FD-Fpz'].append(fractal_dimension(eeg_fpz))
@@ -136,19 +141,13 @@ if __name__ == 'main':
             features['SampEn-m2-Pz'].append(sampen[1])
 
             # Multiscale Entropy
-            taus = [2, 3, 4, 5, 6, 7, 8, 9]
+            taus = [2, 3, 4, 5, 6]
             for tau in taus:
                 features['MSE-tau{}-Fpz'.format(tau)].append(multiscale_entropy(eeg_fpz, 2, tau))
                 features['MSE-tau{}-Pz'.format(tau)].append(multiscale_entropy(eeg_pz, 2, tau))
 
-            if (i + 1) % save_every == 0:
-                temp_features = init_feature_dict(data, i - min(len(features['H-Pz']), save_every) + 1, i)
-                for key in features.keys():
-                    temp_features[key] = features[key][-min(len(features['H-Pz']), save_every):]
-                save_dict_to_csv(temp_features, output_path, feature_names)
+        temp_features = init_feature_dict(data, 0, num_epochs - 1)
+        for key in features.keys():
+            temp_features[key] = features[key]
+        save_dict_to_csv(temp_features, output_path, feature_names)
 
-        if num_epochs % save_every != 0:
-            temp_features = init_feature_dict(data, num_epochs - min(len(features['H-Pz']), save_every), num_epochs - 1)
-            for key in features.keys():
-                temp_features[key] = features[key][-min(len(features['H-Pz']), save_every):]
-            save_dict_to_csv(temp_features, output_path, feature_names)
