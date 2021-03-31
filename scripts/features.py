@@ -2,8 +2,6 @@
 This file contains methods to compute features from Polysomnography
 """
 
-import mne
-import os
 import matplotlib.pyplot as plt
 import nolds
 import numpy as np
