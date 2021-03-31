@@ -121,41 +121,7 @@ def shannon_entropy(ts,n_boxes=100):
 
 
 # APPROXIMATE ENTROPY
-def approximate_entropy(ts, m, r=None):
-    """
-    Compute approximate entropy.
-    :param ts: array, inputted time-series
-    :param m: int, pattern length
-    :param r: float, error threshold
-
-    :return float, sample entropy
-    """
-    x = ts
-    N = len(x)
-    B = 0.0
-    A = 0.0
-
-    if r is None:
-        r = 0.1 * np.std(x)
-
-    # Split time series and save all templates of length m
-    xmi = np.array([x[i: i + m] for i in range(N - m)])
-    xmj = np.array([x[i: i + m] for i in range(N - m + 1)])
-
-    # Save all matches minus the self-match, compute B
-    B = np.sum([np.sum(np.abs(xmii - xmj).max(axis=1) <= r) - 1 for xmii in xmi]) / (N - m + 1)
-
-    # Similar for computing A
-    m += 1
-    xm = np.array([x[i: i + m] for i in range(N - m + 1)])
-
-    A = np.sum([np.sum(np.abs(xmi - xm).max(axis=1) <= r) - 1 for xmi in xm]) / (N - m)
-
-    # Return ApEn
-    return np.log(B) / (N - m + 1) - np.log(A) / (N - m)
-
-
-def ApEn(U, m=2, r=None):
+def approximate_entropy(U, m=2, r=None):
     """
     Compute approximate entropy of the signal U.
     Inspired from https://gist.github.com/DustinAlandzes/a835909ffd15b9927820d175a48dee41
@@ -241,6 +207,82 @@ def multiscale_entropy(ts, m, tau, r=None):
     me = sample_entropy(y, m, r)
 
     return me
+
+
+# FAST ENTROPY COMPUTATION
+def fast_sampen_apen(x, m_max, r=None):
+    """
+    Fast computation of sample entropy and approximate entropy.
+    Adapted from https://github.com/nikdon/pyEntropy
+
+    :param x: array, inputted time-series
+    :param m_max: int, max pattern length
+    :param r: float, error threshold
+
+    :return (array, array), sample entropy and approximate entropy for m = (1,...,m_max-1)
+    """
+    M = m_max
+
+    if r is None:
+        r = 0.1 * np.std(x)
+
+    n = len(x)
+
+    # Number of matches
+    Ntemp = np.zeros((M, n))
+
+    for i in range(n):
+        template = x[i: min(i + M, n)]
+        rem_time_series = x[i:]
+
+        searchlist = np.arange(len(rem_time_series), dtype=np.int32)
+
+        for m in range(0, min(n - i, M)):
+            hitlist = np.abs(rem_time_series[searchlist + m] - template[m]) < r
+            Ntemp[m, i] += np.sum(hitlist)
+
+            searchlist = searchlist[hitlist]
+
+            indices = np.zeros(len(rem_time_series), dtype=bool)
+            indices[searchlist] = True
+            Ntemp[m, i + 1:] += indices[1:].astype(int)
+
+            searchlist = searchlist[searchlist + m + 1 < len(rem_time_series)]
+
+    # Compute sample entropy
+    tot = np.maximum(0, Ntemp - 1).sum(axis=1)
+    sampen = - np.log(np.divide(tot[1:], tot[:-1], out=np.ones_like(tot[:-1]), where=tot[:-1] != 0))
+
+    # Compute approximate entropy
+    norm_coef = n - np.arange(M)
+    phis = np.log(np.maximum(Ntemp, 1)).sum(axis=1) / norm_coef
+    apen = phis[:-1] - phis[1:]
+
+    return sampen, apen
+
+
+def fast_multiscale_entropy(ts, m, tau, r=None):
+    """
+    Compute multiscale entropy using fast_sampen_apen.
+    :param ts: array, inputted time-series
+    :param m: int, pattern length
+    :param tau: scale scale factor
+    :param r: float, error threshold
+
+    :return array, multi-scale entropy (sample entropy at different scales)
+    """
+    x = ts
+    if r is None:
+        r = 0.1 * np.std(x)
+
+    n = x.shape[0]
+
+    k = int(np.floor(n / tau))
+    y = x[:tau * k].reshape((k, tau))
+    y = y.mean(axis=1)
+    sampen, apen = fast_sampen_apen(y, m, r)
+
+    return sampen[-1]
 
 
 # DETRENDED FLUCTUATION
