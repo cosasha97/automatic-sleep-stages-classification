@@ -78,11 +78,22 @@ class DataLoader:
             yield resu
 
 
+def normalize(ar):
+    """
+    Normalize an array
+    :param ar: array
+    """
+    return ar/ar.sum()
+
+
 def features_relevance_analysis(features, variance_criterion=0.98):
     """
     Perform Q-alpha algorithm to select best features.
     :param features: array (n_samples, n_features)
     :param variance_criterion: float, accumulated variance criterion for PCA.
+
+    :return array: features projected on principal components
+    :return array: original features weights (i.e. importance in the principal components)
     """
     n_samples, n_features = features.shape
     xx = np.power(features.T.dot(features), 2)
@@ -98,8 +109,39 @@ def features_relevance_analysis(features, variance_criterion=0.98):
     n_relevant_c = (np.cumsum(pca.explained_variance_ratio_) < variance_criterion).sum() + 1
     V = pca.components_[:n_relevant_c, :].T
 
+    # weights of features in principal components
+    # features_importance = normalize(np.abs(pca.transform(np.eye(n_features))[:, :n_relevant_c]).sum(axis=1))
+    features_importance = normalize(np.abs(pca.components_[:n_relevant_c, :]).sum(axis=0))
+
     # data projection
-    return X.dot(V)
+    return X.dot(V), features_importance
+
+
+def features_relevance_analysis_2(features, variance_criterion=0.98):
+    """
+    Discard features (i.e. columns in the input array 'features') that are the less relevant
+    :param features: array (n_samples, n_features)
+    :param variance_criterion: float, accumulated variance criterion for PCA.
+
+    :return array: features projected on principal components
+    :return array: original features weights (i.e. importance in the principal components)
+    """
+    n_samples, n_features = features.shape
+    X = features
+
+    ## PCA
+    pca = PCA(n_features)
+    _ = pca.fit(X)
+    # number of relevant components
+    n_relevant_c = (np.cumsum(pca.explained_variance_ratio_) < variance_criterion).sum() + 1
+    V = pca.components_[:n_relevant_c, :].T
+
+    # weights of features in principal components
+    features_importance = normalize(np.abs(pca.components_[:n_relevant_c, :]).sum(axis=0))
+    best_features = np.argsort(-features_importance)[:n_relevant_c]
+
+    # data projection
+    return X[:, best_features], features_importance.astype(np.float32)
 
 
 def j_means(X, n_clusters):
