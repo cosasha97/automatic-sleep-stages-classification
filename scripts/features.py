@@ -40,6 +40,7 @@ def fractal_dimension(ts, n_max=20, plot=False):
     N = len(ts)
     x_ = np.log(np.arange(1, n_max + 1))
     y_ = np.zeros(n_max)
+    # box counting algorithm
     for n in range(1, n_max + 1):
         rolled_ar = rolling_ar(ts, window=n + 1, steps=n)
         S = np.sum(np.max(rolled_ar, axis=-1) - np.min(rolled_ar, axis=-1))

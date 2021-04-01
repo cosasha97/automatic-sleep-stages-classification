@@ -95,7 +95,7 @@ def atleast_2d(ary):
     return ary
 
 
-def scale(signal, dim=0):
+def scale(signal):
     """
     Set dim to 1 for 2 dimensional data.
     """
@@ -116,14 +116,20 @@ def process_signal(signal):
     return atleast_2d(scale(signal.T))
 
 
-def annotated_sample(chosen_label, labels, seed=None):
+def annotated_sample(chosen_label, labels, seed=None, n_samples=None):
     """
-    Return random index of sample with label 'chosen_label'
+    If n_samples is None: return a random index of sample with label 'chosen_label'.
+    If n_samples not None: return n_samples indexes with 'chosen_label' as label.
+    These n_samples indexes are consecutive, so corresponding time-series can
+    be concatenated
 
     :param chosen_label: int, selected label
     :param labels: array, labels of samples
     :param seed: int, seed
+    :param n_samples: int, number of samples
     """
+    if n_samples is not None:
+        return np.where(labels == chosen_label)[0][:n_samples]
     np.random.seed(seed)
     return np.random.choice(np.where(labels == chosen_label)[0])
 

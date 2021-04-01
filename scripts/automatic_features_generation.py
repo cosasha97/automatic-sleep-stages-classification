@@ -16,6 +16,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from statsmodels.tsa.stattools import acf
 from scipy.stats import kurtosis, skew
 from scripts.utils import *
+from tqdm import tqdm
 
 
 def pairwise(iterable):
@@ -30,11 +31,14 @@ def get_largest_local_max(signal1D: np.ndarray, order: int = 1):
 
     This function uses `order` points on each side to use for the comparison.
     """
-    all_local_max_indexes = argrelmax(signal1D, order=order)[0]
-    all_local_max = np.take(signal1D, all_local_max_indexes)
-    largest_local_max_index = all_local_max_indexes[
-        all_local_max.argsort()[-1]
-    ]
+    try:
+        all_local_max_indexes = argrelmax(signal1D, order=order)[0]
+        all_local_max = np.take(signal1D, all_local_max_indexes)
+        largest_local_max_index = all_local_max_indexes[
+            all_local_max.argsort()[-1]
+        ]
+    except:
+        return 0, 0
 
     return signal1D[largest_local_max_index], largest_local_max_index
 
@@ -43,7 +47,7 @@ def fig_ax(figsize=(15, 5)):
     return plt.subplots(figsize=figsize)
 
 
-def compute_auto_features_1D(signal_1D, n_lags=400, n_bins=100):
+def compute_auto_features_1D(signal_1D, n_lags=500, n_bins=100):
     """
     Compute features from a signal, as done in TP2.
     """
@@ -87,14 +91,27 @@ def compute_auto_features_1D(signal_1D, n_lags=400, n_bins=100):
     return res_dict
 
 
-def compute_auto_features(signal_MD, n_lags=400, n_bins=100):
+def compute_auto_features(raw_signal, n_lags=500, n_bins=100, variance_threshold=0.2):
     """
-    :param signal_MD: array, multidimensional signal, with shape (n_dim, n_time_steps)
+    Compute 'automatic' features.
+    Filter using variance threshold.
+
+    :param raw_signal: array, multidimensional signal, with shape (n_samples, n_dim, n_time_steps)
     """
-    n_dim, n_time_steps = signal_MD.shape
+    n_samples, n_dim, n_time_steps = raw_signal.shape
     assert n_dim < n_time_steps, "Too many dimensions"
-    dicts = []
-    for dim in range(n_dim):
-        dicts.append(compute_auto_features_1D(signal_MD[dim], n_lags, n_bins))
-    arrays = [np.array(list(d.values())) for d in dicts]
-    return np.hstack(arrays)
+    arrays = []
+    for sample in tqdm(range(n_samples)):
+        dicts = []
+        for dim in range(n_dim):
+            dicts.append(compute_auto_features_1D(raw_signal[sample, dim], n_lags, n_bins))
+        arrays.append(np.hstack([np.array(list(d.values())) for d in dicts]))
+
+    features = np.stack(arrays)
+
+    # features section with variance
+    stds = np.std(features, axis=0)
+    # idx = np.argsort(-stds)[:210] # 210 is obtained experimentally for a threshold of 0.2
+    features = features[:, stds > variance_threshold]
+
+    return features
