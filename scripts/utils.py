@@ -1,9 +1,13 @@
+import os
+import mne
+import itertools
 import numpy as np
+from tqdm.notebook import tqdm
 from scipy.spatial import distance_matrix
+from scipy.optimize import linear_sum_assignment
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
-import mne
-import os
+from sklearn.metrics import accuracy_score
 
 
 class DataLoader:
@@ -192,7 +196,7 @@ def features_relevance_analysis_2(features, variance_criterion=0.98):
     return X[:, best_features], features_importance.astype(np.float32)
 
 
-def j_means(X, n_clusters):
+def j_means(X, n_clusters, random_init=True):
     """
     J-means clustering.
     :param X: array (n_samples, n_features)
@@ -201,16 +205,33 @@ def j_means(X, n_clusters):
     :return labels, centroids
     """
 
+    # Random initialization
+    if random_init:
+        idx_rd_clusters = np.random.randint(len(X), size=n_clusters)
+        centroids = X[idx_rd_clusters]
+        dist = distance_matrix(X, centroids)
+        labels = np.argmin(dist, axis=1)
+
     # K-means initialization
-    k_means = KMeans(n_clusters=n_clusters)
-    dist = k_means.fit_transform(X)
-    centroids = k_means.cluster_centers_
-    labels = k_means.labels_
-    best_value = -k_means.score(X)
+    else:
+        k_means = KMeans(n_clusters=n_clusters)
+        dist = k_means.fit_transform(X)
+        centroids = k_means.cluster_centers_
+        labels = k_means.labels_
+
+    best_labels = labels.copy()
+    best_value = sum(dist[np.arange(X.shape[0]), labels] ** 2)
+    best_centroids = centroids.copy()
+    best_dist = dist.copy()
 
     local_min = False
 
+    jump = 0
+
     while not local_min:
+
+        jump += 1
+        print('Looking for possible jumps | it ', jump, ' | value : ', int(best_value))
 
         local_min = True
 
@@ -218,12 +239,12 @@ def j_means(X, n_clusters):
         unoccupied_idx = []
         for i in range(n_clusters):
             cluster_idx = np.where(labels == i)[0]
-            threshold = 4 * dist[cluster_idx, i].std()
+            threshold = dist[cluster_idx, i].std()
             unoccupied_idx_i = cluster_idx[(dist[:, i] > threshold)[cluster_idx]]
             unoccupied_idx += list(unoccupied_idx_i)
 
         # Find best jump
-        for i in range(len(unoccupied_idx)):
+        for i in tqdm(range(len(unoccupied_idx))):
             for j in range(n_clusters):
 
                 # New centroid from unoccupied point
@@ -255,6 +276,7 @@ def j_means(X, n_clusters):
 
                 # Update best parameters
                 if new_value < best_value:
+                    print('Jump found | old: {} | new {}'.format(best_value, new_value))
                     local_min = False
                     best_centroids = new_centroids
                     best_labels = new_labels
@@ -262,8 +284,25 @@ def j_means(X, n_clusters):
                     best_value = new_value
 
         # Update parameters
-        labels = best_labels
         centroids = best_centroids
-        dist = best_dist
+        k_means = KMeans(n_clusters=n_clusters, init=centroids, n_init=1)
+        dist = k_means.fit_transform(X)
+        centroids = k_means.cluster_centers_
+        labels = k_means.labels_
 
     return labels, centroids
+
+
+def best_cluster_assignment(y, pred):
+    all_perm = list(itertools.permutations([1,2,3,4,5]))
+    best_acc  = 0
+    for perm in all_perm:
+        cluster_to_label = {}
+        for i in range(len(perm)):
+            cluster_to_label[i] = perm[i]
+        pred_label = [cluster_to_label[cluster] for cluster in pred]
+        acc = accuracy_score(y, pred_label)
+        if acc > best_acc:
+            best_acc = acc
+            best_perm = cluster_to_label
+    return best_perm
