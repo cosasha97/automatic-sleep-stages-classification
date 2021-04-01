@@ -83,7 +83,49 @@ def normalize(ar):
     Normalize an array
     :param ar: array
     """
-    return ar/ar.sum()
+    return ar / ar.sum()
+
+
+def atleast_2d(ary):
+    """Reshape array to at least two dimensions."""
+    if ary.ndim == 0:
+        return ary.reshape(1, 1)
+    elif ary.ndim == 1:
+        return ary[:, np.newaxis]
+    return ary
+
+
+def scale(signal, dim=0):
+    """
+    Set dim to 1 for 2 dimensional data.
+    """
+    if signal.ndim == 1:
+        std = np.std(signal, axis=0)
+        mean = np.mean(signal, axis=0)
+    else:
+        std = np.std(signal, axis=1)[:, None]
+        mean = np.mean(signal, axis=1)[:, None]
+    return (signal - mean) / std
+
+
+def process_signal(signal):
+    """
+    Process signal.
+    :param signal: array with shape n_time_steps
+    """
+    return atleast_2d(scale(signal.T))
+
+
+def annotated_sample(chosen_label, labels, seed=None):
+    """
+    Return random index of sample with label 'chosen_label'
+
+    :param chosen_label: int, selected label
+    :param labels: array, labels of samples
+    :param seed: int, seed
+    """
+    np.random.seed(seed)
+    return np.random.choice(np.where(labels == chosen_label)[0])
 
 
 def features_relevance_analysis(features, variance_criterion=0.98):
