@@ -95,21 +95,6 @@ def katz_fractal_dimension(data):
     return np.log10(n) / (np.log10(d / L) + np.log10(n))
 
 
-# DETRENDED FLUCTUATION ANALYSIS
-def dfa_sasha(ts, debug_plot=False, n_scales=15):
-    """
-    Perform detrended fluctuation analysis.
-
-    :param ts: array, inputted time-series
-    :param debug_plot: boolean, if True plot regression
-    :param n_scales: int, number of points (log(L),log(f(L)))
-
-    :return : float, scaling exponent DFA-alpha
-    """
-    nvals = None # np.logspace(3, np.log10(len(ts) // 100), n_scales).astype(int) # to modify (ts are epochs, so much smaller)
-    return nolds.dfa(ts, nvals=nvals, order=1, overlap=False, debug_plot=debug_plot)
-
-
 # SHANNON ENTROPY
 def shannon_entropy(ts, n_boxes=100):
     """
