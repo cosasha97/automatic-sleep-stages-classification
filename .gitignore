@@ -2,3 +2,4 @@ articles*
 data*
 *ipynb_checkpoints*
 scripts/.idea*
+.idea/*
