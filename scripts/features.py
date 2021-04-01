@@ -59,6 +59,8 @@ def fractal_dimension(ts, n_max=20, plot=False):
 
 def higuchi_fractal_dimension(a, k_max=20):
     """
+    Higuchi fractal dimension.
+    Code taken from
     https://stackoverflow.com/questions/47259866/fractal-dimension-algorithms-gives-results-of-2-for-time-series
     """
     L = []
@@ -83,6 +85,8 @@ def higuchi_fractal_dimension(a, k_max=20):
 
 def katz_fractal_dimension(data):
     """
+    Katz fractal dimension.
+    Code taken from
     https://stackoverflow.com/questions/47259866/fractal-dimension-algorithms-gives-results-of-2-for-time-series
     """
     n = len(data) - 1
@@ -107,7 +111,7 @@ def dfa_sasha(ts, debug_plot=False, n_scales=15):
 
 
 # SHANNON ENTROPY
-def shannon_entropy(ts,n_boxes=100):
+def shannon_entropy(ts, n_boxes=100):
     """
     Compute shannon entropy: entropy of amplitudes, as defined in the article "Discrimination of sleep stages".
     :param ts: array, inputted time-series
@@ -115,7 +119,7 @@ def shannon_entropy(ts,n_boxes=100):
 
     :return float, shannon entropy
     """
-    hist, bin_edges = np.histogram(ts,bins=n_boxes)
+    hist, bin_edges = np.histogram(ts, bins=n_boxes)
     hist = hist/hist.sum()
     hist = hist[hist>0]
     return -np.sum(hist*np.log2(hist))/np.log2(n_boxes)
