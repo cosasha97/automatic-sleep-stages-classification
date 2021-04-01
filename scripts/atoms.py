@@ -1,14 +1,11 @@
 """
-Many functions in this code are inspired from the TP1 of the class "Machine Learning for Time-series analysis"
+Many functions in this code are inspired from the TP1 about dictionary learning of the class "Machine Learning for Time-series analysis"
 Master MVA
 """
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from dtw import dtw
-from IPython.display import Audio, display
-from loadmydata.load_uea_ucr import load_uea_ucr_data
 from matplotlib.colors import rgb2hex
 from scipy.cluster import hierarchy
 from scipy.spatial.distance import pdist, squareform
@@ -16,6 +13,9 @@ from sporco import plot, util
 from sporco.admm import cbpdn
 from sporco.dictlrn import cbpdndl
 from scripts.utils import *
+
+# default sparsity penalty
+PENALTY = 4
 
 
 def plot_CDL(signal, Z, D, figsize=(15, 10)):
@@ -33,10 +33,6 @@ def plot_CDL(signal, Z, D, figsize=(15, 10)):
         plt.subplot(n_atoms + 1, 3, (3 * i + 5, 3 * i + 6))
         plt.plot(Z[:, i])
         plt.ylim((np.min(Z), np.max(Z)))
-
-
-# In this cell, we set parameters and options that should probably remained unchanged
-PENALTY = 3
 
 
 # options for the dictionary learning and sparse coding procedures
@@ -64,39 +60,6 @@ def get_opt_sc():
             "NonNegCoef": True,  # only positive sparse codes
         }
     )
-
-
-def display_distance_matrix_as_table(
-        distance_matrix, labels=None, figsize=(8, 2)
-):
-    fig, ax = plt.subplots(figsize=figsize)
-    ax.axis("tight")
-    ax.axis("off")
-    norm = mpl.colors.Normalize()
-    cell_colours_hex = np.empty(shape=distance_matrix.shape, dtype=object)
-    cell_colours_rgba = plt.get_cmap("magma")(norm(distance_matrix))
-
-    for i in range(distance_matrix.shape[0]):
-        for j in range(i + 1, distance_matrix.shape[0]):
-            cell_colours_hex[i, j] = rgb2hex(
-                cell_colours_rgba[i, j], keep_alpha=True
-            )
-            cell_colours_hex[j, i] = cell_colours_hex[i, j]
-
-    if labels is not None:
-        _ = ax.table(
-            cellText=distance_matrix,
-            colLabels=labels,
-            rowLabels=labels,
-            loc="center",
-            cellColours=cell_colours_hex,
-        )
-    else:
-        _ = ax.table(
-            cellText=distance_matrix,
-            loc="center",
-            cellColours=cell_colours_hex,
-        )
 
 
 def get_n_largest(
@@ -127,7 +90,7 @@ def learn_dict(signal, atom_length, n_atoms, rng, penalty=PENALTY):
     :param rng: random number generator
     :param penalty: float, sparsity penalty (Convolutional dictionary learning)
     """
-    opt_dl = get_opt_dl()
+    opt_dl = get_opt_dl(penalty)
     if signal.ndim == 1:
         signal = atleast_2d(signal)
     dimK = signal.shape[1]

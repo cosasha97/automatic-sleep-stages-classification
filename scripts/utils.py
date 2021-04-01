@@ -15,12 +15,19 @@ class DataLoader:
     Framework to load EEG data.
     """
 
-    def __init__(self, path='data/files/sleep-edfx/1.0.0/sleep-cassette'):
+    def __init__(self, path='data/files/sleep-edfx/1.0.0/sleep-cassette', id=None, night=None):
         """
         :param path: string, path to data
+        :param id: int, id of the participant
+        :param night: int, night index (1 or 2)
         """
         self.path = path
-        self.files = [file for file in os.listdir(self.path) if '.edf' in file]
+        additional_infos = ""
+        if id is not None:
+            additional_infos += str(id)
+        if night is not None:
+            additional_infos += str(night)
+        self.files = [file for file in os.listdir(self.path) if ('.edf' in file and additional_infos in file)]
         self.files.sort()
         self.nb_patients = len(self.files) // 2
 
@@ -172,10 +179,11 @@ def features_relevance_analysis(features, variance_criterion=0.98):
 def features_relevance_analysis_2(features, variance_criterion=0.98):
     """
     Discard features (i.e. columns in the input array 'features') that are the less relevant
+
     :param features: array (n_samples, n_features)
     :param variance_criterion: float, accumulated variance criterion for PCA.
 
-    :return array: features projected on principal components
+    :return array: most important original features
     :return array: original features weights (i.e. importance in the principal components)
     """
     n_samples, n_features = features.shape

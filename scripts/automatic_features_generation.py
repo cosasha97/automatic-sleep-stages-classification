@@ -1,18 +1,15 @@
+"""
+Some functions in this code are inspired from the TP2 about features selection of the class "Machine Learning for Time-series analysis"
+Master MVA
+"""
+
 from itertools import tee
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from numpy.fft import rfft, rfftfreq
-from scipy.cluster import hierarchy
 from scipy.signal import argrelmax, stft
-from scipy.spatial.distance import pdist, squareform
-from scipy.stats import f_oneway, spearmanr
-from sklearn.decomposition import PCA
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_selection import SequentialFeatureSelector, RFE
-from sklearn.metrics import accuracy_score, make_scorer
-from sklearn.neighbors import KNeighborsClassifier
 from statsmodels.tsa.stattools import acf
 from scipy.stats import kurtosis, skew
 from scripts.utils import *
@@ -93,14 +90,18 @@ def compute_auto_features_1D(signal_1D, n_lags=500, n_bins=100):
 
 def compute_auto_features(raw_signal, n_lags=500, n_bins=100, variance_threshold=0.2):
     """
-    Compute 'automatic' features.
-    Filter using variance threshold.
+    Compute custom features.
+    Filtering of features using variance threshold.
 
     :param raw_signal: array, multidimensional signal, with shape (n_samples, n_dim, n_time_steps)
+    :param n_lags: int, max lag used for auto-correlation features
+    :param n_bins: int, parameter for spectral features
+    :param variance_threshold: float, threshold used to determine which features are relevant or not
     """
     n_samples, n_dim, n_time_steps = raw_signal.shape
     assert n_dim < n_time_steps, "Too many dimensions"
     arrays = []
+    # computation of the features of each epoch of 30 seconds
     for sample in tqdm(range(n_samples)):
         dicts = []
         for dim in range(n_dim):
@@ -109,7 +110,7 @@ def compute_auto_features(raw_signal, n_lags=500, n_bins=100, variance_threshold
 
     features = np.stack(arrays)
 
-    # features section with variance
+    # features selection with variance thresholding
     stds = np.std(features, axis=0)
     # idx = np.argsort(-stds)[:210] # 210 is obtained experimentally for a threshold of 0.2
     features = features[:, stds > variance_threshold]
