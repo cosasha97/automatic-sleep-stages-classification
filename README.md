@@ -23,4 +23,4 @@ The repository contains the following folders/files:
 
 
 ## Generate results
-In the jupyter notebook 'sleep_stages_classification.ipynb' is shown step by step how to generate results similar to the ones presented in our report.
+In the jupyter notebook 'sleep_stages_classification.ipynb' is shown step by step how to generate similar results to the ones presented in our report.
