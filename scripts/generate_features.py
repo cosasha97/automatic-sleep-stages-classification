@@ -1,3 +1,5 @@
+# This script computes and saves the entropy features.
+
 import numpy as np
 import pandas as pd
 import os
