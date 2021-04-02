@@ -302,6 +302,12 @@ def j_means(X, n_clusters, random_init=True):
 
 
 def best_cluster_assignment(y, pred):
+    """
+    :param y: true labels
+    :param pred: cluster assignment
+
+    :return dict that maps clusters to a label
+    """
     all_perm = list(itertools.permutations([1,2,3,4,5]))
     best_acc  = 0
     for perm in all_perm:
