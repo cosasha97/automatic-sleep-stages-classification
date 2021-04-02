@@ -18,7 +18,7 @@ The repository contains the following folders/files:
   - generate_features.py: pipeline run in practice to generate entropy features
   - utils.py: useful functions and classes, including the class DataLoader (to load and preprocess raw EEG data), the functions to perform features relevance analysis or clustering
 - data/: containing some saved features to plot more quickly results on notebooks
-- report.pdf: our report summurizing our work on the automatic sleep stages classification
+- [report.pdf](https://github.com/cosasha97/automatic-sleep-stages-classification/blob/main/report.pdf): our report summurizing our work on the automatic sleep stages classification
 - sleep_stages_classification.ipynb: see the 'Generate results' section below
 
 
