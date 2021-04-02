@@ -2,6 +2,13 @@
 
 This repository presents the work of Sasha Collin and Clément Nguyen for the roject for the class of 'Machine Learning for Time-Series' - Master MVA
 
+## Context
+Sleep has a very important biological role and has been related to plasticity and reorganization of memory. Unfortunately, sleep disorders are a very common issue that affect a significant number of people worldwide, and have a serious impact on people's health. That's why trying to better understand how sleep works and trying to detect and characterize sleep stages is a hot research topic.
+
+There are 5 different sleep stages: wake (W), drowsiness (N1), light sleep (N2), deep sleep (N3), and rapid eye movement sleep (REM). The classification of such stages, when done manually, is difficult, time consuming, and can lead to annotation errors. To tackle this issue, the authors of \cite{rodriguez2014automatic} propose an unsupervised classification scheme for sleep stage prediction, using entropy features computed from electroencephalograms (EEGs), features relevance analysis, and unsupervised clustering.
+
+We implemented from scratch this algorithm and, to assess the relevance of entropy features, we designed custom features and compared the performances of the algorithm on both sets of features. Finally, we implemented a semi-supervised classification method based on Convolutional Dictionary Learning and compared the classification performances of both algorithms.
+
 ## Generate results
 In the jupyter notebook 'sleep_stages_classification.ipynb' is shown step by step how to generate results similar to the ones presented in our report.
 
