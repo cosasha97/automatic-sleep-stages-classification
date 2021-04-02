@@ -9,10 +9,6 @@ There are 5 different sleep stages: wake (W), drowsiness (N1), light sleep (N2),
 
 We implemented from scratch this algorithm and, to assess the relevance of entropy features, we designed custom features and compared the performances of the algorithm on both sets of features. Finally, we implemented a semi-supervised classification method based on Convolutional Dictionary Learning and compared the classification performances of both algorithms.
 
-## Generate results
-In the jupyter notebook 'sleep_stages_classification.ipynb' is shown step by step how to generate results similar to the ones presented in our report.
-
-
 ## Content
 The repository contains the following folders/files:
 - script/: contains all the scripts used to compute features, perform relevance analysis or clustering
@@ -23,4 +19,8 @@ The repository contains the following folders/files:
   - utils.py: useful functions and classes, including the class DataLoader (to load and preprocess raw EEG data), the functions to perform features relevance analysis or clustering
 - data/: containing some saved features to plot more quickly results on notebooks
 - report.pdf: our report summurizing our work on the automatic sleep stages classification
-- sleep_stages_classification.ipynb: see the 'Generate results' section above
+- sleep_stages_classification.ipynb: see the 'Generate results' section below
+
+
+## Generate results
+In the jupyter notebook 'sleep_stages_classification.ipynb' is shown step by step how to generate results similar to the ones presented in our report.
