@@ -1,6 +1,6 @@
 # automatic-sleep-stages-classification
 
-This repository presents the work of Sasha Collin and Clément Nguyen for the roject for the class of 'Machine Learning for Time-Series' - Master MVA
+This repository presents the work of Sasha Collin and Clément Nguyen for the project for the class of 'Machine Learning for Time-Series' - Master MVA
 
 ## Context
 Sleep has a very important biological role and has been related to plasticity and reorganization of memory. Unfortunately, sleep disorders are a very common issue that affect a significant number of people worldwide, and have a serious impact on people's health. That's why trying to better understand how sleep works and trying to detect and characterize sleep stages is a hot research topic.
